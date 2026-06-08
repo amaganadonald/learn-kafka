@@ -28,4 +28,9 @@ public class LoanController {
     public ResponseEntity<String> createLoan(@RequestBody LoanDTO loanDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(loanDTO));
     }
+
+    @PostMapping("/cancel/{id}")
+    public ResponseEntity<Loan> cancelLoan(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(loanService.cancelLoan(id));
+    }
 }

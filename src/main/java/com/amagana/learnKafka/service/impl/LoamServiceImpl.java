@@ -5,6 +5,7 @@ import com.amagana.learnKafka.dto.LoanDTO;
 import com.amagana.learnKafka.enums.LoanStatus;
 import com.amagana.learnKafka.service.LoanService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -39,17 +40,21 @@ public class LoamServiceImpl implements LoanService {
 
     @Override
     public Loan cancelLoan(Long id) {
-        Loan loan = loans.stream().
-                filter(loan1 -> loan1.getId() == id)
-                .findFirst()
-                .orElseThrow(()-> new RuntimeException("Loan does not exist"));
-        loan.setStatus(LoanStatus.CANCELLED);
-        return loan;
+        return getLoan(id, LoanStatus.CANCELLED);
     }
 
     @Override
     public Loan rejectLoan(Long id) {
-        return null;
+        return getLoan(id, LoanStatus.REJECTED);
+    }
+
+    private Loan getLoan(Long id, LoanStatus rejected) {
+        Loan loan = loans.stream().
+                filter(loan1 -> loan1.getId() == id)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Loan does not exist"));
+        loan.setStatus(rejected);
+        return loan;
     }
 
     @Override
@@ -79,8 +84,14 @@ public class LoamServiceImpl implements LoanService {
     @RetryableTopic(attempts = "4", backoff = @Backoff(delay = 3000, multiplier = 2, maxDelay = 1500),
     exclude = {NullPointerException.class})
     @KafkaListener(topics = LOAN_TOPIC, groupId = "credit-risk-group")
-    public void processLoan(Loan loan, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment ack) {
+    public void processLoan(Loan loan, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment ack,
+                            ConsumerRecord<String, String> record) {
         log.info("Process loan {} from topic: {}", loan,  topic);
+        log.info(
+                "partition={} offset={} value={}",
+                record.partition(),
+                record.offset(),
+                loan);
         List<Double> exceptionAmounts = List.of(114800.0, 79800.0, 124800.0, 84800.0);
         if(exceptionAmounts.contains(loan.getAmount())) {
             throw new RuntimeException("Invalid amount");
