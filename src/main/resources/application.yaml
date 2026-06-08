@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: learnKafka
+
+  kafka:
+    bootstrap-servers: localhost:29092, localhost:39092, localhost:49092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: com.amagana.learnKafka.serdes.LoanSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: com.amagana.learnKafka.serdes.LoanDeserializer
+      group-id: credit-risk-group
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "*"
+    streams:
+      application-id: check-loan
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: com.amagana.learnKafka.serdes.LoanSerde
+      state-dir: /Users/donald/Downloads/kafka-stream-logs
+
+    listener:
+      ack-mode: manual
+
+server:
+  port: 9005
