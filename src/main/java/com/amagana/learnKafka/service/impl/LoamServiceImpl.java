@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -81,7 +80,7 @@ public class LoamServiceImpl implements LoanService {
         return "Transaction sent to Kafka";
     }
 
-    @RetryableTopic(attempts = "4", backoff = @Backoff(delay = 3000, multiplier = 2, maxDelay = 1500),
+    @RetryableTopic(attempts = "4", backoff = @Backoff(delay = 1000, multiplier = 2, maxDelay = 10000),
     exclude = {NullPointerException.class})
     @KafkaListener(topics = LOAN_TOPIC, groupId = "credit-risk-group")
     public void processLoan(Loan loan, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment ack,
